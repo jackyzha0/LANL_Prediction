@@ -18,8 +18,10 @@ fix_len = 150000
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
 
-    batched_dataset = dataset.batch(150000)
+    batched_dataset = dataset.batch(fix_len*2)
     iterator = batched_dataset.make_one_shot_iterator()
+    random_ind = np.random.randint(0,fix_len)
     next_element = iterator.get_next()
 
-    print(sess.run(next_element))
+    print(np.array(sess.run(next_element))[:,0,random_ind:random_ind+fix_len])
+    print(len(np.array(sess.run(next_element))[:,0,random_ind:random_ind+fix_len][0]))
