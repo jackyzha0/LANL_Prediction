@@ -1,0 +1,5 @@
+https://www.kaggle.com/andrekos/basic-feature-benchmark-with-quantiles
+https://www.kaggle.com/wimwim/rolling-quantiles
+https://www.kaggle.com/jsaguiar/baseline-with-multiple-models
+https://www.kaggle.com/artgor/earthquakes-fe-more-features-and-samples
+https://www.kaggle.com/artgor/earthquakes-fe-more-features-and-samples
