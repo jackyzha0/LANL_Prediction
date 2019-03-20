@@ -18,13 +18,6 @@ dataset = tf.data.Dataset.zip((x_dataset, y_dataset))
 fix_len = 1500000
 x_list = range(fix_len)
 
-def smooth(x):
-    n = 50  # the larger n is, the smoother curve will be
-    b = [1.0 / n] * n
-    a = 1
-    yy = lfilter(b,a,x)
-    return yy
-
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
 
