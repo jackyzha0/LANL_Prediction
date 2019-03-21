@@ -1,10 +1,6 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from scipy.signal import lfilter
-# tf.enable_eager_execution()
-
-FILENAME = 'data.tfrecords'
-
 import numpy as np
 import os
 
@@ -15,40 +11,29 @@ record_defaults = [tf.float32] * len(filenames)  # Only provide defaults for the
 x_dataset = tf.contrib.data.CsvDataset(filenames, record_defaults, header=True, select_cols=[0])
 y_dataset = tf.contrib.data.CsvDataset(filenames, record_defaults, header=True, select_cols=[1])
 dataset = tf.data.Dataset.zip((x_dataset, y_dataset))
-fix_len = 1500000
+fix_len = 150000
 x_list = range(fix_len)
+
+batched_dataset = dataset.batch(fix_len*2)
+iterator = batched_dataset.make_one_shot_iterator()
+random_ind = np.random.randint(0,fix_len)
+next_element = iterator.get_next()
+
+def get_example():
+    return np.array(sess.run(next_element))[:,0,random_ind:random_ind+fix_len]
+
+def get_batch(batchsize, shuffle=True):
+    batch = []
+    for i in range(batchsize):
+        batch.append(get_example())
+    if shuffle:
+        np.random.shuffle(batch)
+    return batch
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
 
-    batched_dataset = dataset.batch(fix_len*2)
-    iterator = batched_dataset.make_one_shot_iterator()
-    random_ind = np.random.randint(0,fix_len)
-    next_element = iterator.get_next()
-
-    def get_example():
-        return np.array(sess.run(next_element))[:,0,random_ind:random_ind+fix_len]
+    inputs = tf.placeholder(tf.float32, [None, None, num_mfccs*2])
 
     ex = get_example()
-    ex = get_example()
-
-    fig, ax1 = plt.subplots()
-    t = np.arange(fix_len)
-
-    color = 'tab:red'
-    ax1.set_xlabel('time')
-    ax1.set_ylabel('acoustic data', color=color)
-    ax1.plot(t, ex[0], color='tab:green')
-    ax1.plot(t, smooth(ex[0]), color=color)
-    ax1.tick_params(axis='y', labelcolor=color)
-
-    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-
-    color = 'tab:blue'
-    ax2.set_ylabel('time until fault', color=color)  # we already handled the x-label with ax1
-    # ax2.plot(t, smooth(ex[1]), color=color)
-    ax2.plot(t, ex[1], color=color)
-    ax2.tick_params(axis='y', labelcolor=color)
-
-    fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    plt.show()
+    print(ex)
