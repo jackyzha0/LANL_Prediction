@@ -58,14 +58,15 @@ def plot(x):
     fig.tight_layout()
     plt.show()
 
-with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
+graph = tf.Graph()
+with graph.as_default():
 
     #Define network architecture
     x_acoustic = tf.placeholder(tf.float32, [None, fix_len])
     y_timetofailure = tf.placeholder(tf.float32, [None, fix_len])
 
     x_acoustic = tf.expand_dims(x_acoustic, -1)
+    y_timetofailure = tf.expand_dims(y_timetofailure, -1)
 
     def RNN(x):
 
@@ -102,8 +103,19 @@ with tf.Session() as sess:
     net = RNN(net)
     print(net.get_shape())
 
-    net = tf.contrib.layers.fully_connected(net, 1)
+    logits = tf.contrib.layers.fully_connected(net, 1)
     print(net.get_shape())
 
+    print("Total trainable parameters:")
+    print(np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()]))
+
+    loss = tf.losses.mean_squared_error(y_timetofailure, logits)
+
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+    grads = optimizer.compute_gradients(loss)
+    train_op = optimizer.apply_gradients(grads)
+
+with tf.Session(graph=graph) as sess:
+        sess.run(tf.global_variables_initializer())
     # x = get_batch(batchsize)
     # print(x.shape)
