@@ -4,6 +4,13 @@ from scipy.signal import lfilter
 import numpy as np
 import os
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+
+run_metadata = tf.RunMetadata()
+options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE, output_partition_graphs=True)
+config = tf.ConfigProto()
+
 learning_rate = 1e-3
 batchsize = 4
 epochs = 10
@@ -66,8 +73,7 @@ with graph.as_default():
     #Define network architecture
     x_acoustic = tf.placeholder(tf.float32, [None, fix_len])
     y_timetofailure = tf.placeholder(tf.float32, [None, 1])
-
-    x_acoustic = tf.expand_dims(x_acoustic, -1)
+    x_reshape = tf.reshape(x_acoustic, [-1, fix_len, 1])
     # y_timetofailure = tf.expand_dims(y_timetofailure, -1)
     # print(y_timetofailure.get_shape())
 
@@ -92,7 +98,7 @@ with graph.as_default():
         # Linear activation, using rnn inner loop last output
         return tf.matmul(outputs[-1], weights['out']) + biases['out']
 
-    net = tf.layers.conv1d(x_acoustic, 16, 10000, strides = 3) #Form [input layer, #filters, kernel_size]
+    net = tf.layers.conv1d(x_reshape, 16, 10000, strides = 3) #Form [input layer, #filters, kernel_size]
     print(net.get_shape())
     net = tf.layers.conv1d(net, 8, 5000, strides = 5)
     print(net.get_shape())
@@ -103,23 +109,21 @@ with graph.as_default():
     net = tf.layers.conv1d(net, 1, 100, strides = 2)
     print(net.get_shape())
 
-    net = RNN(net)
-    print(net.get_shape())
+    # net = RNN(net)
+    rnet = tf.reshape(net, [-1, 268])
+    print(rnet.get_shape())
 
-    logits = tf.contrib.layers.fully_connected(net, 1)
-    print(net.get_shape())
+    logits = tf.contrib.layers.fully_connected(rnet, 1)
+    print(logits.get_shape())
 
-    print("Total trainable parameters:")
-    print(np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()]))
 
     loss = tf.losses.mean_squared_error(y_timetofailure, logits)
 
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-    grads = optimizer.compute_gradients(loss)
-    train_op = optimizer.apply_gradients(grads)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
-with tf.Session(graph=graph) as sess:
-    sess.run(tf.global_variables_initializer())
+with tf.Session(graph=graph, config=config) as sess:
+    tf.global_variables_initializer().run()
+    tf.local_variables_initializer().run()
 
     for epoch in range(epochs):
         for batch in range(int(dbsize / (fix_len * batchsize))):
@@ -127,15 +131,15 @@ with tf.Session(graph=graph) as sess:
             ex_batch = get_batch(batchsize)
             # print(ex_batch)
             x,y = np.split(ex_batch, 2, axis = 1)
+            x = np.squeeze(x)
             y = np.squeeze(y)[:,-1:]
-            print(y.shape)
-            out = sess.run([train_op, loss, logits],
-            feed_dict={x_acoustic: x, y_timetofailure: ex_batch[1][-1]})
 
-            print('Pred: ' + str(np.array(out)[2][-1]))
-            print('Actual: ' + str(ex_batch[1][-1]))
-            print('Loss: ' + str(np.array(out)[1]))
-            print('______')
+            out = sess.run([optimizer, loss], feed_dict={x_acoustic: x, y_timetofailure: y})
+            print(out)
+            # out = sess.run([train_op, loss, logits],
+            # feed_dict={x_acoustic: x, y_timetofailure: y})
 
-    # x = get_batch(batchsize)
-    # print(x.shape)
+            # print('Pred: ' + str(np.array(out)[2][-1]))
+            # print('Actual: ' + str(ex_batch[1][-1]))
+            # print('Loss: ' + str(np.array(out)[1]))
+            # print('______')
