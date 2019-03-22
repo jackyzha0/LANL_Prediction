@@ -12,7 +12,7 @@ options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE, output_partition_g
 config = tf.ConfigProto()
 
 learning_rate = 1e-3
-batchsize = 4
+batchsize = 1
 epochs = 10
 
 #LSTM Params
@@ -24,12 +24,6 @@ filename = train_dir_path + "train.csv"
 dbsize = 6000000
 fix_len = 150000
 filenames = [filename]
-
-record_defaults = [tf.float32] * len(filenames)  # Only provide defaults for the selected columns
-x_dataset = tf.contrib.data.CsvDataset(filenames, record_defaults, header=True, select_cols=[0])
-y_dataset = tf.contrib.data.CsvDataset(filenames, record_defaults, header=True, select_cols=[1])
-dataset = tf.data.Dataset.zip((x_dataset, y_dataset))
-x_list = range(fix_len)
 
 def plot(x):
     fig, ax1 = plt.subplots()
@@ -53,6 +47,12 @@ def plot(x):
 
 graph = tf.Graph()
 with graph.as_default():
+
+    record_defaults = [tf.float32] * len(filenames)  # Only provide defaults for the selected columns
+    x_dataset = tf.contrib.data.CsvDataset(filenames, record_defaults, header=True, select_cols=[0])
+    y_dataset = tf.contrib.data.CsvDataset(filenames, record_defaults, header=True, select_cols=[1])
+    dataset = tf.data.Dataset.zip((x_dataset, y_dataset))
+    x_list = range(fix_len)
 
     batched_dataset = dataset.batch(fix_len*2)
     iterator = batched_dataset.make_one_shot_iterator()
@@ -132,14 +132,15 @@ with tf.Session(graph=graph, config=config) as sess:
             # print(ex_batch)
             x,y = np.split(ex_batch, 2, axis = 1)
             x = np.squeeze(x)
-            y = np.squeeze(y)[:,-1:]
+            print(np.squeeze(y, axis=(1,)).shape)
+            y = np.squeeze(y, axis=(1,))[:,-1:]
 
             out = sess.run([optimizer, loss], feed_dict={x_acoustic: x, y_timetofailure: y})
             print(out)
-            # out = sess.run([train_op, loss, logits],
-            # feed_dict={x_acoustic: x, y_timetofailure: y})
+            out = sess.run([train_op, loss, logits],
+            feed_dict={x_acoustic: x, y_timetofailure: y})
 
-            # print('Pred: ' + str(np.array(out)[2][-1]))
-            # print('Actual: ' + str(ex_batch[1][-1]))
-            # print('Loss: ' + str(np.array(out)[1]))
-            # print('______')
+            print('Pred: ' + str(np.array(out)[2][-1]))
+            print('Actual: ' + str(ex_batch[1][-1]))
+            print('Loss: ' + str(np.array(out)[1]))
+            print('______')
