@@ -1,6 +1,9 @@
 # LANL Earthquake Prediction
 https://www.kaggle.com/c/LANL-Earthquake-Prediction
 
+### Problems
+CUDA out of memory
+
 ### Goal
 To predict when a fault will happen given acoustic data
 
