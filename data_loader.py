@@ -4,12 +4,13 @@ from scipy.signal import lfilter
 import numpy as np
 import os
 
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 run_metadata = tf.RunMetadata()
 options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE, output_partition_graphs=True)
-config = tf.ConfigProto()
+config = tf.ConfigProto(gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5))
 
 learning_rate = 1e-3
 batchsize = 1
@@ -116,7 +117,6 @@ with graph.as_default():
     logits = tf.contrib.layers.fully_connected(rnet, 1)
     print(logits.get_shape())
 
-
     loss = tf.losses.mean_squared_error(y_timetofailure, logits)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
@@ -131,8 +131,7 @@ with tf.Session(graph=graph, config=config) as sess:
             ex_batch = get_batch(batchsize)
             # print(ex_batch)
             x,y = np.split(ex_batch, 2, axis = 1)
-            x = np.squeeze(x)
-            print(np.squeeze(y, axis=(1,)).shape)
+            x = np.squeeze(x, axis=(1,))
             y = np.squeeze(y, axis=(1,))[:,-1:]
 
             out = sess.run([optimizer, loss], feed_dict={x_acoustic: x, y_timetofailure: y})
