@@ -4,6 +4,10 @@ https://www.kaggle.com/c/LANL-Earthquake-Prediction
 ### Problems
 CUDA out of memory
 
+### TODO
+Try without RNN
+Try without CSV Dataset
+
 ### Goal
 To predict when a fault will happen given acoustic data
 

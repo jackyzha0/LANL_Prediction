@@ -1,3 +1,7 @@
+'''
+THIS FILE IS DEPRECATED AND NO LONGER IN USE
+'''
+
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from scipy.signal import lfilter
@@ -49,16 +53,16 @@ def plot(x):
 graph = tf.Graph()
 with graph.as_default():
 
-    record_defaults = [tf.float32] * len(filenames)  # Only provide defaults for the selected columns
-    x_dataset = tf.contrib.data.CsvDataset(filenames, record_defaults, header=True, select_cols=[0])
-    y_dataset = tf.contrib.data.CsvDataset(filenames, record_defaults, header=True, select_cols=[1])
-    dataset = tf.data.Dataset.zip((x_dataset, y_dataset))
-    x_list = range(fix_len)
-
-    batched_dataset = dataset.batch(fix_len*2)
-    iterator = batched_dataset.make_one_shot_iterator()
-    random_ind = np.random.randint(0,fix_len)
-    next_element = iterator.get_next()
+    # record_defaults = [tf.float32] * len(filenames)  # Only provide defaults for the selected columns
+    # x_dataset = tf.contrib.data.CsvDataset(filenames, record_defaults, header=True, select_cols=[0])
+    # y_dataset = tf.contrib.data.CsvDataset(filenames, record_defaults, header=True, select_cols=[1])
+    # dataset = tf.data.Dataset.zip((x_dataset, y_dataset))
+    # x_list = range(fix_len)
+    #
+    # batched_dataset = dataset.batch(fix_len*2)
+    # iterator = batched_dataset.make_one_shot_iterator()
+    # random_ind = np.random.randint(0,fix_len)
+    # next_element = iterator.get_next()
 
     def get_example():
         return np.array(sess.run(next_element))[:,0,random_ind:random_ind+fix_len]
@@ -66,7 +70,8 @@ with graph.as_default():
     def get_batch(batchsize, shuffle=True):
         batch = np.zeros(shape=(batchsize,2,fix_len))
         for i in range(batchsize):
-            batch[i] = get_example()
+            # batch[i] = get_example()
+            batch[i] = np.random.random(fix_len)
         if shuffle:
             np.random.shuffle(batch)
         return batch
@@ -115,7 +120,7 @@ with graph.as_default():
     print(rnet.get_shape())
 
     logits = tf.contrib.layers.fully_connected(rnet, 1)
-    print(logits.get_shape())
+    # print(logits.get_shape())
 
     loss = tf.losses.mean_squared_error(y_timetofailure, logits)
 
