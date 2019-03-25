@@ -18,7 +18,7 @@ config = tf.ConfigProto()
 ### PARAMETERS ###
 batchsize = 4
 fix_len = 150000
-learning_rate = 1e-5
+learning_rate = 1e-8
 epochs = 10
 dbsize = 6000000
 
@@ -41,7 +41,7 @@ with graph.as_default():
         x = tf.unstack(x, 140, 1)
 
         # Define a lstm cell with tensorflow
-        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(num_hidden, forget_bias=1.0)
+        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(num_hidden, forget_bias=0.8)
 
         # Get lstm cell output
         outputs, states = tf.nn.static_rnn(lstm_cell, x, dtype=tf.float32)
@@ -70,9 +70,8 @@ with graph.as_default():
     print(logits.get_shape())
     print(y_timetofailure.get_shape())
 
-    # loss = tf.losses.mean_squared_error(logits, y_timetofailure)
     loss = tf.reduce_mean(tf.losses.mean_squared_error(logits, y_timetofailure))
-    optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate).minimize(loss)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, epsilon=1e-0).minimize(loss)
 
 with tf.Session(graph=graph, config=config) as sess:
     tf.global_variables_initializer().run()
@@ -90,6 +89,5 @@ with tf.Session(graph=graph, config=config) as sess:
         out = sess.run([optimizer, loss, logits], feed_dict={x_acoustic: x, y_timetofailure: y})
         print('Pred: ' + str(np.array(out)[2]))
         print('Actual: ' + str(y))
-        print(np.array(out)[2][0]-y[0])
         print('Loss: ' + str(np.array(out)[1]))
         print('______')

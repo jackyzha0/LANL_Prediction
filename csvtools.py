@@ -5,17 +5,16 @@ from datetime import datetime
 CSVDIR = "data/train.csv"
 fix_len = 150000
 DBLEN = 6000000
-# lim = DBLEN - fix_len
-lim = 150000
+lim = DBLEN - fix_len
+# lim = 150000
 
 print('Loading dataset...',datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-out = pd.read_csv(CSVDIR, header=0, dtype={'acoustic_data': np.int16, 'time_to_failure': np.float32}, nrows=2*fix_len)
+out = pd.read_csv(CSVDIR, header=0, dtype={'acoustic_data': np.int16, 'time_to_failure': np.float32})#, nrows=2*fix_len)
 
 print('Done!',datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 def get_example():
     ind = np.random.randint(0,lim)
-    # ind = 0
     return out['acoustic_data'][ind:ind+fix_len], out['time_to_failure'][ind:ind+fix_len]
 
 def get_batch(batchsize):
