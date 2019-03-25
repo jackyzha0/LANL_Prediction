@@ -15,6 +15,7 @@ print('Done!',datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 def get_example():
     ind = np.random.randint(0,lim)
+    # ind = 0
     return out['acoustic_data'][ind:ind+fix_len], out['time_to_failure'][ind:ind+fix_len]
 
 def get_batch(batchsize):
