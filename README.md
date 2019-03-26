@@ -1,19 +1,12 @@
 # LANL Earthquake Prediction
 https://www.kaggle.com/c/LANL-Earthquake-Prediction
 
-### Problems
-CUDA out of memory
-
-### TODO
-Try without RNN
-Try without CSV Dataset
 
 ### Goal
 To predict when a fault will happen given acoustic data
 
 ### Things to try
  - Normalize to [0, 1]
- - LSTM
  - GPR (Gaussian Process Regression) coefficients
   - Diff between high / low
  - Standard statistical measures for frames of actual data & GPR vals
@@ -24,7 +17,3 @@ To predict when a fault will happen given acoustic data
   - Kurtosis
  - MFCCs
  - 2nd and 3rd Derivatives of all
-
-### Frame Details
- - Sizes 50k, 10k, 5k, 1k
- - Stride
