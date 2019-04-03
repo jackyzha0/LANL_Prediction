@@ -19,7 +19,7 @@ config = tf.ConfigProto()
 ### PARAMETERS ###
 batchsize = 32
 fix_len = 150000
-learning_rate = 1e-4
+learning_rate = 1e-5
 iters = 1000
 dbsize = 6000000
 
@@ -32,16 +32,18 @@ def plot(x):
 
     color = 'tab:red'
     ax1.set_xlabel('time')
-    ax1.set_ylabel('acoustic data', color=color)
-    ax1.plot(t, x[0], color='tab:red')
+    ax1.set_ylabel('predicted time', color=color)
+    ax1.plot(t, x[0], color=color)
+    color = 'tab:blue'
+    ax1.plot(t, x[1], color=color)
     ax1.tick_params(axis='y', labelcolor=color)
 
-    ax2 = ax1.twinx()
-
-    color = 'tab:blue'
-    ax2.set_ylabel('time until fault', color=color)
-    ax2.plot(t, x[1], color=color)
-    ax2.tick_params(axis='y', labelcolor=color)
+    # ax2 = ax1.twinx()
+    #
+    # color = 'tab:blue'
+    # ax2.set_ylabel('time until fault', color=color)
+    # ax2.plot(t, x[1], color=color)
+    # ax2.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()
     plt.show()
@@ -62,7 +64,7 @@ with graph.as_default():
         x = tf.unstack(x, 140, 1)
 
         # Define a lstm cell with tensorflow
-        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(num_hidden, forget_bias=0.8)
+        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(num_hidden, forget_bias=1.0)
 
         # Get lstm cell output
         outputs, states = tf.nn.static_rnn(lstm_cell, x, dtype=tf.float32)
@@ -74,11 +76,11 @@ with graph.as_default():
     y_timetofailure = tf.placeholder(tf.float32, [None, 1])
     x_reshape = tf.reshape(x_acoustic, [-1, fix_len, 1])
 
-    net = tf.layers.conv1d(x_reshape, 16, 100, strides = 10, kernel_initializer=tf.contrib.layers.xavier_initializer()) #Form [input layer, #filters, kernel_size]
+    net = tf.layers.conv1d(x_reshape, 64, 100, strides = 10, kernel_initializer=tf.contrib.layers.xavier_initializer()) #Form [input layer, #filters, kernel_size]
     print(net.get_shape())
-    net = tf.layers.conv1d(net, 8, 100, strides = 10, kernel_initializer=tf.contrib.layers.xavier_initializer())
+    net = tf.layers.conv1d(net, 32, 100, strides = 10, kernel_initializer=tf.contrib.layers.xavier_initializer())
     print(net.get_shape())
-    net = tf.layers.conv1d(net, 4, 100, strides = 10, kernel_initializer=tf.contrib.layers.xavier_initializer())
+    net = tf.layers.conv1d(net, 16, 100, strides = 10, kernel_initializer=tf.contrib.layers.xavier_initializer())
     print(net.get_shape())
 
     f_net = tf.contrib.layers.flatten(net)
@@ -100,13 +102,14 @@ with tf.Session(graph=graph, config=config) as sess:
 
     for _ in range(iters):
         batch = csvtools.get_batch(batchsize)
-        # plot(batch[0])
         x,y = np.split(batch, 2, axis = 1)
         x = np.squeeze(x, axis=(1,))
         y = np.squeeze(y, axis=(1,))[:,-1:]
 
         # print('Running for logits...',datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         out = sess.run([optimizer, loss, logits], feed_dict={x_acoustic: x, y_timetofailure: y})
+        if (_ % 25 == 0):
+            plot([out[2],y])
         # print('Pred: ' + str(np.array(out)[2]))
         # print('Actual: ' + str(y))
         print('Batch ' + str(_) + ' | Loss: ' + str(np.array(out)[1]))
